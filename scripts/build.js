@@ -57,10 +57,13 @@ function build() {
     console.log(`  ✅ ${browser.padEnd(8)} → dist/${browser}/  (v${manifest.version})`);
   }
   
-  // Create releases
+  // Create releases (clean previous builds)
   const releasesDir = path.join(ROOT, 'releases');
-  if (!fs.existsSync(releasesDir)) fs.mkdirSync(releasesDir);
-  
+  // Remove old releases folder if it exists
+  if (fs.existsSync(releasesDir)) {
+    fs.rmSync(releasesDir, { recursive: true, force: true });
+  }
+  fs.mkdirSync(releasesDir, { recursive: true });  
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
   console.log('\n📦 Creating versioned releases...');
 

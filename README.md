@@ -6,9 +6,12 @@ Assign short aliases to URLs and navigate instantly via the address bar.
 
 - **Omnibox redirect** — Type `b <space> <alias>` in the address bar to instantly navigate
 - **Popup UI** — Add, edit, delete, and search aliases with favicons
-- **Import / Export** — Backup and restore aliases as JSON
+- **Import / Export** — Backup and restore aliases as JSON (Export now auto‑closes the popup)
 - **Themes** — Follows system preference (dark/light) with manual toggle
 - **Keyboard shortcut** — `Ctrl+Shift+S` to open the popup
+- **Search‑engine aliases** — Use `%s` in an alias URL to perform a quick search (e.g. `google.com/search?q=%s`)
+- **Compact grid view** — Toggle between list and grid layouts with the view‑mode button in the popup header
+
 
 ## 📖 Usage
 
@@ -23,7 +26,9 @@ Assign short aliases to URLs and navigate instantly via the address bar.
 
 ### Build & Release
 
-To build the extension and generate marketplace-ready zips:
+### Build & Release
+
+To build the extension and generate marketplace‑ready zip files:
 
 ```bash
 npm run build
