@@ -1,6 +1,6 @@
 {
   "name": "web-alias",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Cross-browser extension to manage URL aliases",
   "private": true,
   "scripts": {
