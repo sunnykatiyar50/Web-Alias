@@ -94,7 +94,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       const dataUrl = 'data:application/json;base64,' + b64;
       
       chrome.downloads.download({
-        url: dataUrl
+        url: dataUrl,
+        filename: currentExportFilename
         // saveAs is intentionally omitted because calling it from a background script 
         // without a trusted user click token causes it to aggressively fail on Firefox and Chrome alike.
       }, (downloadId) => {
@@ -111,14 +112,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 });
 
-chrome.downloads.onDeterminingFilename.addListener((item, suggest) => {
-  if (item.byExtensionId === chrome.runtime.id && currentExportFilename) {
-    suggest({ filename: currentExportFilename, conflictAction: 'overwrite' });
-    currentExportFilename = null;
-  } else {
-    suggest();
-  }
-});
+if (chrome.downloads && 'onDeterminingFilename' in chrome.downloads) {
+  chrome.downloads['onDeterminingFilename'].addListener((item, suggest) => {
+    if (item.byExtensionId === chrome.runtime.id && currentExportFilename) {
+      suggest({ filename: currentExportFilename, conflictAction: 'overwrite' });
+      currentExportFilename = null;
+    } else {
+      suggest();
+    }
+  });
+}
 
 /* ── Install / Update ────────────────────────────────────── */
 
