@@ -2,7 +2,7 @@
 
 Assign short aliases to URLs and navigate instantly via the address bar.
 
-## Features
+## 🚀 Features
 
 - **Omnibox redirect** — Type `z <space> <alias>` in the address bar to instantly navigate
 - **Popup UI** — Add, edit, delete, and search aliases with favicons
@@ -10,32 +10,42 @@ Assign short aliases to URLs and navigate instantly via the address bar.
 - **Themes** — Follows system preference (dark/light) with manual toggle
 - **Keyboard shortcut** — `Ctrl+Shift+S` to open the popup
 
-## Quick Start
+## 📖 Usage
 
-### Build
+- **Address bar:** Type `z` then press Space, then type your alias and Enter
+- **Popup:** Click the extension icon (or `Ctrl+Shift+S`) to manage aliases
+- **Add alias:** Click **Add** button or press `Ctrl+N` in the popup
+- **Theme toggle:** Click the icon in the header to switch between System, Dark, and Light modes
+
+---
+
+## 🛠 Developer Instructions
+
+### Build & Release
+
+To build the extension and generate marketplace-ready zips:
 
 ```bash
-node scripts/build.js
+npm run build
 ```
 
-### Load in Chrome
+This will:
+1. Sync the version from `package.json` to both manifests.
+2. Build the shared source into `dist/chrome/` and `dist/firefox/`.
+3. Generate versioned zip files in the `releases/` directory.
+
+### Loading in Chrome
 
 1. Go to `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked** → select `dist/chrome/`
 
-### Load in Firefox
+### Loading in Firefox
 
 1. Go to `about:debugging#/runtime/this-firefox`
 2. Click **Load Temporary Add-on** → select `dist/firefox/manifest.json`
 
-## Usage
-
-- **Address bar:** Type `z` then press Space, then type your alias and Enter
-- **Popup:** Click the extension icon (or `Ctrl+Shift+S`) to manage aliases
-- **Add alias:** Click **Add** button or press `Ctrl+N` in the popup
-
-## Project Structure
+## 📂 Project Structure
 
 ```
 src/                  # Shared source (both browsers)
@@ -46,11 +56,11 @@ manifests/            # Browser-specific manifests
   chrome/             
   firefox/            
 dist/                 # Build output (gitignored)
-  chrome/             # Ready to load in Chrome
-  firefox/            # Ready to load in Firefox
+releases/             # Versioned zip files for marketplaces (tracked)
+scripts/              # Build and asset generation scripts
 ```
 
-## Future Plans
+## 🗺 Future Plans
 
 - Google login for GDrive sync (import/export settings)
 - Alias categories / folders
