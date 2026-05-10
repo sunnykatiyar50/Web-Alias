@@ -20,9 +20,12 @@
   var $btnImport   = document.getElementById('btn-import');
   var $btnExport   = document.getElementById('btn-export');
   var $btnView     = document.getElementById('btn-view');
+  var $btnExpand   = document.getElementById('btn-expand');
   var $sortSelect  = document.getElementById('sort-select');
   var $categoryFilter = document.getElementById('category-filter');
   var $fileImport  = document.getElementById('file-import');
+  var $resizeHandle = document.getElementById('resize-handle');
+  var $resizeHandleLeft = document.getElementById('resize-handle-left');
   var $modalOverlay = document.getElementById('modal-overlay');
   var $modalTitle  = document.getElementById('modal-title');
   var $form        = document.getElementById('alias-form');
@@ -41,11 +44,36 @@
   var currentCategoryFilter = '';
 
   /* ── Init ──────────────────────────────────────────────── */
+  initPopupSize();
+  initTabMode();
   Theme.initTheme();
   initViewMode();
   initSortMode();
   renderList();
   $search.focus();
+
+  /* ── Tab Mode ───────────────────────────────────────────── */
+  function initTabMode() {
+    // Detect if we're running as a full tab (not a popup)
+    var isTab = window.location.search.indexOf('tab=1') !== -1;
+    if (isTab) {
+      document.documentElement.setAttribute('data-mode', 'tab');
+      document.body.setAttribute('data-mode', 'tab');
+      document.documentElement.style.removeProperty('width');
+      document.documentElement.style.removeProperty('height');
+      document.body.style.removeProperty('width');
+      document.body.style.removeProperty('height');
+      // Change expand button to indicate current mode
+      $btnExpand.setAttribute('title', 'Opened in full window');
+      $btnExpand.style.color = 'var(--accent)';
+      $btnExpand.style.pointerEvents = 'none';
+    }
+  }
+
+  $btnExpand.addEventListener('click', function() {
+    var url = chrome.runtime.getURL('popup/popup.html') + '?tab=1';
+    chrome.tabs.create({ url: url });
+  });
 
   /* ── Render ─────────────────────────────────────────────── */
   async function renderList(filter) {
@@ -365,6 +393,66 @@
     currentCategoryFilter = $categoryFilter.value;
     renderList($search.value.trim());
   });
+
+  /* ── Resize ───────────────────────────────────────────── */
+  function initPopupSize() {
+    chrome.storage.local.get(['wa_popup_w', 'wa_popup_h'], function(data) {
+      if (data.wa_popup_w) {
+        document.documentElement.style.width = data.wa_popup_w + 'px';
+        document.body.style.width = data.wa_popup_w + 'px';
+      }
+      if (data.wa_popup_h) {
+        document.documentElement.style.height = data.wa_popup_h + 'px';
+        document.body.style.height = data.wa_popup_h + 'px';
+      }
+    });
+  }
+
+  $resizeHandle.addEventListener('mousedown', function(e) {
+    setupResize(e, false);
+  });
+
+  $resizeHandleLeft.addEventListener('mousedown', function(e) {
+    setupResize(e, true);
+  });
+
+  function setupResize(e, isLeft) {
+    e.preventDefault();
+    document.documentElement.classList.add('resizing');
+    var startX = e.screenX;
+    var startY = e.screenY;
+    var startW = document.documentElement.offsetWidth;
+    var startH = document.documentElement.offsetHeight;
+
+    function onMouseMove(ee) {
+      var diffX = ee.screenX - startX;
+      var diffY = ee.screenY - startY;
+      
+      var newW = isLeft ? (startW - diffX) : (startW + diffX);
+      var newH = startH + diffY;
+
+      newW = Math.min(800, Math.max(500, newW));
+      newH = Math.min(600, Math.max(420, newH));
+
+      document.documentElement.style.width = newW + 'px';
+      document.body.style.width = newW + 'px';
+      document.documentElement.style.height = newH + 'px';
+      document.body.style.height = newH + 'px';
+    }
+
+    function onMouseUp() {
+      document.documentElement.classList.remove('resizing');
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      chrome.storage.local.set({
+        wa_popup_w: document.documentElement.offsetWidth,
+        wa_popup_h: document.documentElement.offsetHeight
+      });
+    }
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
 
   /* ── Toast ──────────────────────────────────────────────── */
   function showToast(message) {
