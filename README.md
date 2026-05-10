@@ -1,6 +1,8 @@
 # Web Alias — Browser Extension
 
-Assign short aliases to URLs and navigate instantly via the address bar.
+Assign short aliases to URLs and navigate instantly via the address bar. 
+
+*Note: This is a vibe code utility tool.*
 
 ## 🚀 Features
 
