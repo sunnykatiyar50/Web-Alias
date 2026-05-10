@@ -15,6 +15,7 @@
   function applyTheme(theme) {
     var resolved = theme === 'system' ? getSystemTheme() : theme;
     document.documentElement.setAttribute('data-theme', resolved);
+    document.documentElement.setAttribute('data-theme-preference', theme);
   }
 
   async function initTheme() {
