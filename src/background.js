@@ -21,14 +21,31 @@ chrome.omnibox.onInputStarted.addListener(() => {
 
 // Provide suggestions as user types
 chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
+  const input = text.trim();
+  const firstSpaceIndex = input.indexOf(' ');
   const aliases = await getAliases();
-  const query = text.trim().toLowerCase();
 
-  if (!query) {
+  if (!input) {
     suggest([]);
     return;
   }
 
+  // Check if we are typing a query for an existing alias
+  if (firstSpaceIndex !== -1) {
+    const key = input.substring(0, firstSpaceIndex).toLowerCase();
+    const query = input.substring(firstSpaceIndex + 1).trim();
+    const entry = aliases[key];
+
+    if (entry && entry.url.includes('%s')) {
+      chrome.omnibox.setDefaultSuggestion({
+        description: `Search ${entry.displayName} for <match>${query}</match>`
+      });
+      suggest([]); // No other suggestions needed if we are in search mode
+      return;
+    }
+  }
+
+  const query = input.toLowerCase();
   const matches = Object.values(aliases)
     .filter(a =>
       a.alias.toLowerCase().includes(query) ||
@@ -54,15 +71,37 @@ chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
 // Navigate when user presses Enter
 chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
   const aliases = await getAliases();
-  const key = text.trim().toLowerCase();
+  const input = text.trim();
+  const firstSpaceIndex = input.indexOf(' ');
+  
+  let key = input.toLowerCase();
+  let query = '';
+
+  if (firstSpaceIndex !== -1) {
+    key = input.substring(0, firstSpaceIndex).toLowerCase();
+    query = input.substring(firstSpaceIndex + 1).trim();
+  }
+
   const entry = aliases[key];
 
   if (!entry) {
-    // No match — try as URL or search
+    // If no exact alias match, check if the input itself is a URL
+    if (/^https?:\/\//i.test(input) || input.includes('.')) {
+      const url = /^https?:\/\//i.test(input) ? input : 'https://' + input;
+      chrome.tabs.update({ url });
+    }
     return;
   }
 
   let url = entry.url;
+
+  // Handle %s replacement if query exists
+  if (query && url.includes('%s')) {
+    url = url.replace(/%s/g, encodeURIComponent(query));
+  } else if (query) {
+    // If query exists but no %s, fallback to just the alias or maybe append?
+    // Most users expect %s, so if not present, we just navigate to the base URL
+  }
   // Ensure protocol
   if (!/^https?:\/\//i.test(url)) {
     url = 'https://' + url;

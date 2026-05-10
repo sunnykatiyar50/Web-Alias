@@ -19,6 +19,7 @@
   var $btnTheme    = document.getElementById('btn-theme');
   var $btnImport   = document.getElementById('btn-import');
   var $btnExport   = document.getElementById('btn-export');
+  var $btnView     = document.getElementById('btn-view');
   var $fileImport  = document.getElementById('file-import');
   var $modalOverlay = document.getElementById('modal-overlay');
   var $modalTitle  = document.getElementById('modal-title');
@@ -31,9 +32,11 @@
 
   var editingAlias = null;
   var currentAliases = {};
+  var currentViewMode = 'list';
 
   /* ── Init ──────────────────────────────────────────────── */
   Theme.initTheme();
+  initViewMode();
   renderList();
   $search.focus();
 
@@ -247,6 +250,7 @@
 
     setTimeout(function () {
       URL.revokeObjectURL(url);
+      window.close();
     }, 1000);
   });
 
@@ -254,6 +258,28 @@
   $btnImport.addEventListener('click', function () {
     var importUrl = chrome.runtime.getURL('import.html');
     chrome.tabs.create({ url: importUrl });
+  });
+
+  /* ── View Mode ─────────────────────────────────────────── */
+  async function initViewMode() {
+    var data = await chrome.storage.local.get('wa_view_mode');
+    currentViewMode = data.wa_view_mode || 'list';
+    applyViewMode();
+  }
+
+  function applyViewMode() {
+    document.documentElement.setAttribute('data-view', currentViewMode);
+    if (currentViewMode === 'grid') {
+      $list.classList.add('alias-list--grid');
+    } else {
+      $list.classList.remove('alias-list--grid');
+    }
+  }
+
+  $btnView.addEventListener('click', async function () {
+    currentViewMode = currentViewMode === 'list' ? 'grid' : 'list';
+    await chrome.storage.local.set({ 'wa_view_mode': currentViewMode });
+    applyViewMode();
   });
 
   /* ── Toast ──────────────────────────────────────────────── */

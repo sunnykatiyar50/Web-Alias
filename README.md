@@ -4,7 +4,7 @@ Assign short aliases to URLs and navigate instantly via the address bar.
 
 ## 🚀 Features
 
-- **Omnibox redirect** — Type `z <space> <alias>` in the address bar to instantly navigate
+- **Omnibox redirect** — Type `b <space> <alias>` in the address bar to instantly navigate
 - **Popup UI** — Add, edit, delete, and search aliases with favicons
 - **Import / Export** — Backup and restore aliases as JSON
 - **Themes** — Follows system preference (dark/light) with manual toggle
@@ -12,7 +12,7 @@ Assign short aliases to URLs and navigate instantly via the address bar.
 
 ## 📖 Usage
 
-- **Address bar:** Type `z` then press Space, then type your alias and Enter
+- **Address bar:** Type `b` then press Space, then type your alias and Enter
 - **Popup:** Click the extension icon (or `Ctrl+Shift+S`) to manage aliases
 - **Add alias:** Click **Add** button or press `Ctrl+N` in the popup
 - **Theme toggle:** Click the icon in the header to switch between System, Dark, and Light modes
