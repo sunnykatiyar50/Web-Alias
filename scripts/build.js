@@ -42,21 +42,44 @@ function build() {
     // Copy shared source
     copyRecursive(SRC, outDir);
 
-    // Copy browser-specific manifest
+    // Sync version from package.json to manifest
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
     const manifestSrc = path.join(MANIFESTS, browser, 'manifest.json');
+    const manifest = JSON.parse(fs.readFileSync(manifestSrc, 'utf8'));
+    manifest.version = pkg.version;
+
     const manifestDest = path.join(outDir, 'manifest.json');
-    fs.copyFileSync(manifestSrc, manifestDest);
+    fs.writeFileSync(manifestDest, JSON.stringify(manifest, null, 2));
 
     // Flatten utils into root for background.js (service worker can't use ES imports)
     // background.js uses inline storage helpers, so no action needed
 
-    const manifest = JSON.parse(fs.readFileSync(manifestDest, 'utf8'));
     console.log(`  ✅ ${browser.padEnd(8)} → dist/${browser}/  (v${manifest.version})`);
   }
+  
+  // Create releases
+  const releasesDir = path.join(ROOT, 'releases');
+  if (!fs.existsSync(releasesDir)) fs.mkdirSync(releasesDir);
+  
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+  console.log('\n📦 Creating versioned releases...');
 
-  console.log('\n✨ Done! Load the extension from:');
-  console.log(`   Chrome:  dist/chrome/   (chrome://extensions → Load unpacked)`);
-  console.log(`   Firefox: dist/firefox/  (about:debugging → Load Temporary Add-on → manifest.json)`);
+  const { execSync } = require('child_process');
+  for (const browser of BROWSERS) {
+    const zipName = `web-alias-${browser}-v${pkg.version}.zip`;
+    const zipPath = path.join(releasesDir, zipName);
+    const distDir = path.join(DIST, browser);
+    
+    try {
+      execSync(`tar -a -c -f "${zipPath}" -C "${distDir}" .`);
+      console.log(`  ✅ ${zipName}`);
+    } catch (err) {
+      console.error(`  ❌ Failed to create zip for ${browser}: ${err.message}`);
+    }
+  }
+
+  console.log('\n✨ Done!');
+  console.log('📦 Marketplace-ready zips are in: releases/');
 }
 
 build();
