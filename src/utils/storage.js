@@ -23,13 +23,16 @@
 
   async function setAlias(alias, entry) {
     const all = await getAliases();
+    const existing = all[alias] || {};
     all[alias] = {
       displayName: entry.displayName || alias,
       alias,
       url: entry.url,
       favicon: entry.favicon || null,
-      createdAt: entry.createdAt || Date.now(),
-      updatedAt: Date.now()
+      createdAt: entry.createdAt || existing.createdAt || Date.now(),
+      updatedAt: Date.now(),
+      useCount: existing.useCount || 0,
+      lastUsed: existing.lastUsed || null
     };
     await chrome.storage.local.set({ [KEYS.ALIASES]: all });
     return all[alias];
@@ -39,6 +42,15 @@
     const all = await getAliases();
     delete all[alias];
     await chrome.storage.local.set({ [KEYS.ALIASES]: all });
+  }
+
+  async function incrementUsage(alias) {
+    const all = await getAliases();
+    if (all[alias]) {
+      all[alias].useCount = (all[alias].useCount || 0) + 1;
+      all[alias].lastUsed = Date.now();
+      await chrome.storage.local.set({ [KEYS.ALIASES]: all });
+    }
   }
 
   /* ── Import / Export ─────────────────────────────────── */
@@ -80,7 +92,7 @@
   /* ── Public API ──────────────────────────────────────── */
 
   window.AliasStorage = {
-    getAliases, getAlias, setAlias, deleteAlias,
+    getAliases, getAlias, setAlias, deleteAlias, incrementUsage,
     exportAliases, importAliases,
     getSettings, setSettings
   };

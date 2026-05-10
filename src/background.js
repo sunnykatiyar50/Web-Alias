@@ -10,6 +10,15 @@ async function getAliases() {
   return data.aliases || {};
 }
 
+async function incrementUsage(aliasKey) {
+  const aliases = await getAliases();
+  if (aliases[aliasKey]) {
+    aliases[aliasKey].useCount = (aliases[aliasKey].useCount || 0) + 1;
+    aliases[aliasKey].lastUsed = Date.now();
+    await chrome.storage.local.set({ aliases });
+  }
+}
+
 /* ── Omnibox ─────────────────────────────────────────────── */
 
 // Set default suggestion when omnibox activates
@@ -106,6 +115,8 @@ chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
   if (!/^https?:\/\//i.test(url)) {
     url = 'https://' + url;
   }
+
+  await incrementUsage(key);
 
   switch (disposition) {
     case 'currentTab':

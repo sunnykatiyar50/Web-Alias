@@ -20,6 +20,7 @@
   var $btnImport   = document.getElementById('btn-import');
   var $btnExport   = document.getElementById('btn-export');
   var $btnView     = document.getElementById('btn-view');
+  var $sortSelect  = document.getElementById('sort-select');
   var $fileImport  = document.getElementById('file-import');
   var $modalOverlay = document.getElementById('modal-overlay');
   var $modalTitle  = document.getElementById('modal-title');
@@ -33,10 +34,12 @@
   var editingAlias = null;
   var currentAliases = {};
   var currentViewMode = 'list';
+  var currentSortMode = 'most_used';
 
   /* ── Init ──────────────────────────────────────────────── */
   Theme.initTheme();
   initViewMode();
+  initSortMode();
   renderList();
   $search.focus();
 
@@ -56,7 +59,18 @@
         })
       : entries;
 
-    filtered.sort(function (a, b) { return a.alias.localeCompare(b.alias); });
+    filtered.sort(function (a, b) {
+      if (currentSortMode === 'recent') {
+        var aTime = a.createdAt || 0;
+        var bTime = b.createdAt || 0;
+        if (bTime !== aTime) return bTime - aTime;
+      } else if (currentSortMode === 'most_used') {
+        var countA = a.useCount || 0;
+        var countB = b.useCount || 0;
+        if (countB !== countA) return countB - countA;
+      }
+      return a.alias.localeCompare(b.alias);
+    });
 
     $list.innerHTML = '';
     $count.textContent = entries.length + ' alias' + (entries.length !== 1 ? 'es' : '');
@@ -84,6 +98,7 @@
       
       el.style.animationDelay = (i * 30) + 'ms';
       el.setAttribute('data-url', entry.url);
+      el.setAttribute('data-alias', entry.alias);
 
       var faviconUrl = Favicon.getFaviconUrl(entry.url);
       var hue = Favicon.hashToHue(entry.displayName);
@@ -209,7 +224,9 @@
     var item = e.target.closest('[data-open]');
     if (item) {
       var url = item.dataset.url;
+      var clickedAlias = item.dataset.alias;
       if (url) {
+        if (clickedAlias) await Storage.incrementUsage(clickedAlias);
         if (chrome.tabs && chrome.tabs.create) {
           chrome.tabs.create({ url: url });
         } else {
@@ -280,6 +297,19 @@
     currentViewMode = currentViewMode === 'list' ? 'grid' : 'list';
     await chrome.storage.local.set({ 'wa_view_mode': currentViewMode });
     applyViewMode();
+  });
+
+  /* ── Sort Mode ─────────────────────────────────────────── */
+  async function initSortMode() {
+    var data = await chrome.storage.local.get('wa_sort_mode');
+    currentSortMode = data.wa_sort_mode || 'most_used';
+    $sortSelect.value = currentSortMode;
+  }
+
+  $sortSelect.addEventListener('change', async function () {
+    currentSortMode = $sortSelect.value;
+    await chrome.storage.local.set({ 'wa_sort_mode': currentSortMode });
+    renderList($search.value.trim());
   });
 
   /* ── Toast ──────────────────────────────────────────────── */
