@@ -1,8 +1,6 @@
 # Web Alias — Browser Extension
 
-Assign short aliases to URLs and navigate instantly via the address bar. 
-
-*Note: This is a vibe code utility tool.*
+Assign short aliases to URLs and navigate instantly via the address bar.
 
 ## 🚀 Features
 
@@ -13,6 +11,7 @@ Assign short aliases to URLs and navigate instantly via the address bar.
 - **Keyboard shortcut** — `Ctrl+Shift+S` to open the popup
 - **Search‑engine aliases** — Use `%s` in an alias URL to perform a quick search (e.g. `google.com/search?q=%s`)
 - **Compact grid view** — Toggle between list and grid layouts with the view‑mode button in the popup header
+- **Smart Sorting & Analytics** — Automatically tracks usage so your most frequently used aliases bubble to the top, with options to sort by Recent or A-Z.
 
 
 ## 📖 Usage
@@ -71,4 +70,3 @@ scripts/              # Build and asset generation scripts
 
 - Google login for GDrive sync (import/export settings)
 - Alias categories / folders
-- Usage analytics (most used aliases)
