@@ -132,17 +132,15 @@
     $modalTitle.textContent = editingAlias ? 'Edit Alias' : 'Add Alias';
     $form.reset();
 
+    $fieldAlias.readOnly = false;
     if (editingAlias) {
       Storage.getAlias(editingAlias).then(function (entry) {
         if (entry) {
           $fieldName.value = entry.displayName;
           $fieldAlias.value = entry.alias;
           $fieldUrl.value = entry.url;
-          $fieldAlias.readOnly = true;
         }
       });
-    } else {
-      $fieldAlias.readOnly = false;
     }
 
     $modalOverlay.classList.remove('hidden');
@@ -170,6 +168,11 @@
     var displayName = $fieldName.value.trim();
 
     if (!alias || !url || !displayName) return;
+    
+    // Handle rename: if editing and alias changed, delete old entry
+    if (editingAlias && editingAlias !== alias) {
+      await Storage.deleteAlias(editingAlias);
+    }
 
     await Storage.setAlias(alias, {
       displayName: displayName,
