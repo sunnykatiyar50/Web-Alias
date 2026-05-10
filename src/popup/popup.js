@@ -21,12 +21,15 @@
   var $btnExport   = document.getElementById('btn-export');
   var $btnView     = document.getElementById('btn-view');
   var $sortSelect  = document.getElementById('sort-select');
+  var $categoryFilter = document.getElementById('category-filter');
   var $fileImport  = document.getElementById('file-import');
   var $modalOverlay = document.getElementById('modal-overlay');
   var $modalTitle  = document.getElementById('modal-title');
   var $form        = document.getElementById('alias-form');
   var $fieldName   = document.getElementById('field-name');
   var $fieldAlias  = document.getElementById('field-alias');
+  var $fieldCategory = document.getElementById('field-category');
+  var $categorySuggestions = document.getElementById('category-suggestions');
   var $fieldUrl    = document.getElementById('field-url');
   var $btnCancel   = document.getElementById('btn-cancel');
   var $btnClose    = document.getElementById('btn-modal-close');
@@ -35,6 +38,7 @@
   var currentAliases = {};
   var currentViewMode = 'list';
   var currentSortMode = 'most_used';
+  var currentCategoryFilter = '';
 
   /* ── Init ──────────────────────────────────────────────── */
   Theme.initTheme();
@@ -51,6 +55,28 @@
     var entries = Object.values(aliases);
     var query = filter.toLowerCase();
 
+    var categories = new Set();
+    entries.forEach(function(e) { categories.add(e.category || 'Uncategorized'); });
+    
+    var filterHtml = '<option value="">All Categories</option>';
+    Array.from(categories).sort().forEach(function(c) {
+      filterHtml += '<option value="' + c + '"' + (currentCategoryFilter === c ? ' selected' : '') + '>' + c + '</option>';
+    });
+    $categoryFilter.innerHTML = filterHtml;
+
+    $categorySuggestions.innerHTML = '';
+    Array.from(categories).sort().forEach(function(c) {
+      var chip = document.createElement('span');
+      chip.className = 'category-chip';
+      chip.textContent = c;
+      chip.addEventListener('click', function() {
+        $fieldCategory.value = c;
+        updateActiveChips();
+      });
+      $categorySuggestions.appendChild(chip);
+    });
+    updateActiveChips();
+
     var filtered = query
       ? entries.filter(function (a) {
           return a.alias.toLowerCase().indexOf(query) !== -1 ||
@@ -58,6 +84,10 @@
                  a.url.toLowerCase().indexOf(query) !== -1;
         })
       : entries;
+
+    if (currentCategoryFilter) {
+      filtered = filtered.filter(function(a) { return (a.category || 'Uncategorized') === currentCategoryFilter; });
+    }
 
     filtered.sort(function (a, b) {
       if (currentSortMode === 'recent') {
@@ -107,6 +137,7 @@
       var img = el.querySelector('.alias-item__icon');
       var avatar = el.querySelector('.alias-item__avatar');
       var nameText = el.querySelector('.name-text');
+      var catSpan = el.querySelector('.alias-item__category');
       var badge = el.querySelector('.alias-item__badge');
       var urlEl = el.querySelector('.alias-item__url');
       var editBtn = el.querySelector('.edit-btn');
@@ -124,6 +155,7 @@
       avatar.textContent = initials;
 
       nameText.textContent = entry.displayName + ' ';
+      catSpan.textContent = entry.category || 'Uncategorized';
       badge.textContent = entry.alias;
       urlEl.textContent = truncUrl(entry.url);
       urlEl.title = entry.url;
@@ -156,6 +188,7 @@
         if (entry) {
           $fieldName.value = entry.displayName;
           $fieldAlias.value = entry.alias;
+          $fieldCategory.value = entry.category || 'Uncategorized';
           $fieldUrl.value = entry.url;
         }
       });
@@ -178,12 +211,27 @@
     if (e.target === $modalOverlay) closeModal();
   });
 
+  $fieldCategory.addEventListener('input', updateActiveChips);
+
+  function updateActiveChips() {
+    var val = $fieldCategory.value.trim();
+    var chips = $categorySuggestions.querySelectorAll('.category-chip');
+    chips.forEach(function(chip) {
+      if (chip.textContent === val) {
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
+  }
+
   /* ── Save ────────────────────────────────────────────────── */
   $form.addEventListener('submit', async function (e) {
     e.preventDefault();
     var alias = $fieldAlias.value.trim().toLowerCase();
     var url = $fieldUrl.value.trim();
     var displayName = $fieldName.value.trim();
+    var category = $fieldCategory.value.trim() || 'Uncategorized';
 
     if (!alias || !url || !displayName) return;
     
@@ -195,6 +243,7 @@
     await Storage.setAlias(alias, {
       displayName: displayName,
       url: url,
+      category: category,
       favicon: Favicon.getFaviconUrl(url)
     });
 
@@ -309,6 +358,11 @@
   $sortSelect.addEventListener('change', async function () {
     currentSortMode = $sortSelect.value;
     await chrome.storage.local.set({ 'wa_sort_mode': currentSortMode });
+    renderList($search.value.trim());
+  });
+
+  $categoryFilter.addEventListener('change', function () {
+    currentCategoryFilter = $categoryFilter.value;
     renderList($search.value.trim());
   });
 

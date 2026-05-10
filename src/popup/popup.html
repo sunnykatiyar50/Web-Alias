@@ -55,6 +55,9 @@
       <option value="recent">Recently Added</option>
       <option value="az">A-Z</option>
     </select>
+    <select id="category-filter" class="sort-select" title="Filter by category">
+      <option value="">All Categories</option>
+    </select>
     <button id="btn-add" class="btn btn--primary" title="Add alias">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       <span>Add</span>
@@ -113,6 +116,11 @@
           <input type="text" id="field-alias" placeholder="gh" required pattern="[a-zA-Z0-9\-_]+" title="Letters, numbers, hyphens, underscores only">
         </div>
         <div class="form-group">
+          <label for="field-category">Category</label>
+          <input type="text" id="field-category" placeholder="Uncategorized" autocomplete="off">
+          <div id="category-suggestions" class="category-suggestions"></div>
+        </div>
+        <div class="form-group">
           <label for="field-url">URL</label>
           <input type="text" id="field-url" placeholder="https://github.com" required>
           <p class="field-hint">Use <code>%s</code> for search (e.g. <code>google.com/search?q=%s</code>)</p>
@@ -134,6 +142,7 @@
       <div class="alias-item__info">
         <div class="alias-item__name">
           <span class="name-text"></span>
+          <span class="alias-item__category"></span>
           <span class="alias-item__badge"></span>
         </div>
         <div class="alias-item__url"></div>

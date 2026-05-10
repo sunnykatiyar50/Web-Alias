@@ -28,6 +28,7 @@
       displayName: entry.displayName || alias,
       alias,
       url: entry.url,
+      category: entry.category || 'Uncategorized',
       favicon: entry.favicon || null,
       createdAt: entry.createdAt || existing.createdAt || Date.now(),
       updatedAt: Date.now(),
