@@ -74,7 +74,7 @@ function build() {
     const distDir = path.join(DIST, browser);
     
     try {
-      execSync(`tar -a -c -f "${zipPath}" -C "${distDir}" .`);
+      execSync(`powershell -NoProfile -Command "Compress-Archive -Path '${distDir}\\*' -DestinationPath '${zipPath}' -Force"`);
       console.log(`  ✅ ${zipName}`);
     } catch (err) {
       console.error(`  ❌ Failed to create zip for ${browser}: ${err.message}`);

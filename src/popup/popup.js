@@ -34,14 +34,24 @@
   var $fieldCategory = document.getElementById('field-category');
   var $categorySuggestions = document.getElementById('category-suggestions');
   var $fieldUrl    = document.getElementById('field-url');
-  var $btnCancel   = document.getElementById('btn-cancel');
-  var $btnClose    = document.getElementById('btn-modal-close');
+  var $noResults        = document.getElementById('no-results-state');
+  var $btnSelect        = document.getElementById('btn-select');
+  var $multiselectBar   = document.getElementById('multiselect-bar');
+  var $multiselectCount = document.getElementById('multiselect-count');
+  var $btnSelectAll     = document.getElementById('btn-select-all');
+  var $btnOpenSelected  = document.getElementById('btn-open-selected');
+  var $btnDeleteSelected= document.getElementById('btn-delete-selected');
+  var $btnCancelSelect  = document.getElementById('btn-cancel-select');
+  var $btnCancel        = document.getElementById('btn-cancel');
+  var $btnClose         = document.getElementById('btn-modal-close');
 
   var editingAlias = null;
   var currentAliases = {};
   var currentViewMode = 'list';
   var currentSortMode = 'most_used';
   var currentCategoryFilter = '';
+  var selectMode = false;
+  var selectedAliases = new Set();
 
   /* ── Init ──────────────────────────────────────────────── */
   initPopupSize();
@@ -143,23 +153,21 @@
 
     if (entries.length === 0) {
       $empty.classList.remove('hidden');
+      $noResults.classList.add('hidden');
       $list.classList.add('hidden');
       return;
     }
 
     $empty.classList.add('hidden');
-    $list.classList.remove('hidden');
 
     if (filtered.length === 0) {
-      var emptyDiv = document.createElement('div');
-      emptyDiv.className = 'empty-state';
-      emptyDiv.style.padding = '24px';
-      var p = document.createElement('p');
-      p.textContent = 'No matches found.';
-      emptyDiv.appendChild(p);
-      $list.appendChild(emptyDiv);
+      $list.classList.add('hidden');
+      $noResults.classList.remove('hidden');
       return;
     }
+
+    $noResults.classList.add('hidden');
+    $list.classList.remove('hidden');
 
     var fragment = document.createDocumentFragment();
 
@@ -321,9 +329,23 @@
       return;
     }
 
-    // Click on the item body → open URL in new tab
+    // Click on the item body
     var item = e.target.closest('[data-open]');
     if (item) {
+      if (selectMode) {
+        var alias = item.dataset.alias;
+        if (alias) {
+          if (selectedAliases.has(alias)) {
+            selectedAliases.delete(alias);
+            item.classList.remove('alias-item--selected');
+          } else {
+            selectedAliases.add(alias);
+            item.classList.add('alias-item--selected');
+          }
+          updateMultiselectBar();
+        }
+        return;
+      }
       var url = item.dataset.url;
       var clickedAlias = item.dataset.alias;
       if (url) {
@@ -504,10 +526,79 @@
     }
   }
 
+  /* ── Multiselect ────────────────────────────────────────── */
+  function enterSelectMode() {
+    selectMode = true;
+    selectedAliases.clear();
+    document.body.setAttribute('data-select', '1');
+    $btnSelect.classList.add('btn-select--active');
+    $multiselectBar.classList.remove('hidden');
+    updateMultiselectBar();
+  }
+
+  function exitSelectMode() {
+    selectMode = false;
+    selectedAliases.clear();
+    document.body.removeAttribute('data-select');
+    $btnSelect.classList.remove('btn-select--active');
+    $multiselectBar.classList.add('hidden');
+    $list.querySelectorAll('.alias-item--selected').forEach(function(el) {
+      el.classList.remove('alias-item--selected');
+    });
+  }
+
+  function updateMultiselectBar() {
+    var n = selectedAliases.size;
+    $multiselectCount.textContent = n + ' selected';
+    $btnOpenSelected.disabled = n === 0;
+    $btnDeleteSelected.disabled = n === 0;
+  }
+
+  $btnSelect.addEventListener('click', function() {
+    if (selectMode) { exitSelectMode(); } else { enterSelectMode(); }
+  });
+
+  $btnCancelSelect.addEventListener('click', exitSelectMode);
+
+  $btnSelectAll.addEventListener('click', function() {
+    var items = $list.querySelectorAll('.alias-item');
+    var allSelected = selectedAliases.size === items.length;
+    if (allSelected) {
+      selectedAliases.clear();
+      items.forEach(function(el) { el.classList.remove('alias-item--selected'); });
+    } else {
+      items.forEach(function(el) {
+        var alias = el.dataset.alias;
+        if (alias) { selectedAliases.add(alias); el.classList.add('alias-item--selected'); }
+      });
+    }
+    updateMultiselectBar();
+  });
+
+  $btnOpenSelected.addEventListener('click', function() {
+    selectedAliases.forEach(function(alias) {
+      var entry = currentAliases[alias];
+      if (entry && entry.url) {
+        Storage.incrementUsage(alias);
+        chrome.tabs.create({ url: entry.url });
+      }
+    });
+    exitSelectMode();
+  });
+
+  $btnDeleteSelected.addEventListener('click', async function() {
+    var toDelete = Array.from(selectedAliases);
+    exitSelectMode();
+    for (var alias of toDelete) { await Storage.deleteAlias(alias); }
+    await renderList($search.value.trim());
+    showToast(toDelete.length + ' alias' + (toDelete.length !== 1 ? 'es' : '') + ' deleted');
+  });
+
   /* ── Keyboard shortcuts ─────────────────────────────────── */
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && !$modalOverlay.classList.contains('hidden')) {
-      closeModal();
+    if (e.key === 'Escape') {
+      if (!$modalOverlay.classList.contains('hidden')) { closeModal(); }
+      else if (selectMode) { exitSelectMode(); }
     }
     if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
       e.preventDefault();

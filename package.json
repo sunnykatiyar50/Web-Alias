@@ -1,7 +1,7 @@
 {
   "name": "web-alias",
   "version": "2.0.3",
-  "description": "Cross-browser extension to manage URL aliases",
+  "description": "Web alias manager and URL shortcut launcher. Type a keyword in the address bar to instantly navigate to any saved URL.",
   "private": true,
   "scripts": {
     "build": "node scripts/build.js"
