@@ -24,7 +24,8 @@
   },
   "permissions": [
     "storage",
-    "downloads"
+    "downloads",
+    "tabs"
   ],
   "commands": {
     "_execute_action": {

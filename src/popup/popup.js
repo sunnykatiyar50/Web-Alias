@@ -86,13 +86,21 @@
     var categories = new Set();
     entries.forEach(function(e) { categories.add(e.category || 'Uncategorized'); });
     
-    var filterHtml = '<option value="">All Categories</option>';
-    Array.from(categories).sort().forEach(function(c) {
-      filterHtml += '<option value="' + c + '"' + (currentCategoryFilter === c ? ' selected' : '') + '>' + c + '</option>';
-    });
-    $categoryFilter.innerHTML = filterHtml;
+    $categoryFilter.textContent = '';
+    var allOption = document.createElement('option');
+    allOption.value = '';
+    allOption.textContent = 'All Categories';
+    $categoryFilter.appendChild(allOption);
 
-    $categorySuggestions.innerHTML = '';
+    Array.from(categories).sort().forEach(function(c) {
+      var opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      if (currentCategoryFilter === c) opt.selected = true;
+      $categoryFilter.appendChild(opt);
+    });
+
+    $categorySuggestions.textContent = '';
     Array.from(categories).sort().forEach(function(c) {
       var chip = document.createElement('span');
       chip.className = 'category-chip';
@@ -130,7 +138,7 @@
       return a.alias.localeCompare(b.alias);
     });
 
-    $list.innerHTML = '';
+    $list.textContent = '';
     $count.textContent = entries.length + ' alias' + (entries.length !== 1 ? 'es' : '');
 
     if (entries.length === 0) {
@@ -143,7 +151,13 @@
     $list.classList.remove('hidden');
 
     if (filtered.length === 0) {
-      $list.innerHTML = '<div class="empty-state" style="padding:24px"><p>No matches found.</p></div>';
+      var emptyDiv = document.createElement('div');
+      emptyDiv.className = 'empty-state';
+      emptyDiv.style.padding = '24px';
+      var p = document.createElement('p');
+      p.textContent = 'No matches found.';
+      emptyDiv.appendChild(p);
+      $list.appendChild(emptyDiv);
       return;
     }
 
@@ -220,6 +234,16 @@
           $fieldUrl.value = entry.url;
         }
       });
+    } else {
+      var isTab = window.location.search.indexOf('tab=1') !== -1;
+      if (!isTab) {
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+          if (tabs && tabs[0]) {
+            $fieldName.value = tabs[0].title || '';
+            $fieldUrl.value  = tabs[0].url   || '';
+          }
+        });
+      }
     }
 
     $modalOverlay.classList.remove('hidden');
@@ -468,11 +492,7 @@
   }
 
   /* ── Helpers ────────────────────────────────────────────── */
-  function escHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
+
 
   function truncUrl(url) {
     try {
