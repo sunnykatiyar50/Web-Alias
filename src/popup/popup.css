@@ -481,6 +481,10 @@ html[data-mode="tab"] .resize-handle {
 }
 
 /* ── Empty State ────────────────────────────────────────── */
+.alias-list > .empty-state {
+  width: 100%;
+}
+
 .empty-state {
   flex: 1;
   display: flex;
